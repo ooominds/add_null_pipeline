@@ -119,7 +119,7 @@ def main():
     
     extract_all_sentences(og_file, infile)
     # Next use the following command in the Linux terminal: shuf -n 500 [infile].txt > [infile]_[n].txt
-    if sample:
+    if sample == "t":
         system("shuf -n {} {}.txt > {}_{}.txt".format(n, infile, infile, n))
         infile = "{}_{}".format(infile, n)
     add_null(infile, final_output)
