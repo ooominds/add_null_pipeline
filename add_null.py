@@ -4,6 +4,8 @@ from nltk import RegexpParser, tree
 from os import system
 from sys import argv
 import logging
+import argparse
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("add_null")
 logger.setLevel(level=logging.INFO)
@@ -104,25 +106,29 @@ def add_tags(infile):
         sen_tagged = tag.pos_tag(sen_tokenized, tagset="claws5")
 
 def main():
-    #"BNC_XML_2007/sst_c5"
-    og_file = argv[1]
-    #"BNC_XML_2007/sen_sst_c5"
-    infile = argv[2]
-    n = argv[3]
-    final_output = argv[4]
-    sample = argv[5]
 
-    logger.info("Location of original POS-tagged file: {}".format(og_file))
-    logger.info("Location of POS-tagged file as nltk-compatible sentences (per line): {}".format(infile))
-    logger.info("Number of smapled sentences: {}".format(n))
-    logger.info("POS-tagged file with null-articles: {}".format(final_output))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('og_file', type=str, help='location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    parser.add_argument('in_file', type=str, help='location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
+    parser.add_argument('out_file', type=str, help='location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
     
-    extract_all_sentences(og_file, infile)
+    parser.add_argument('-sa', type=bool, default=True, help='A random sample from the in_file a specific number of sentences')
+    parser.add_argument('-se', type=int, default=500, help='a random seed')
+    parser.add_argument('-n', type=int, default=500, help='number of sentences to sample (requires sample flag to be set)')
+
+    args = parser.parse_args()
+
+    logger.info("Location of original POS-tagged file: {}".format(args.og_file))
+    logger.info("Location of POS-tagged file as nltk-compatible sentences (per line): {}".format(args.in_file))
+    logger.info("POS-tagged file with null-articles: {}".format(args.out_file))
+    
+    extract_all_sentences(args.og_file, args.in_file)
     # Next use the following command in the Linux terminal: shuf -n 500 [infile].txt > [infile]_[n].txt
-    if sample == "t":
-        system("shuf -n {} {}.txt > {}_{}.txt".format(n, infile, infile, n))
-        infile = "{}_{}".format(infile, n)
-    add_null(infile, final_output)
+    if args.sa:
+        logger.info("Number of smapled sentences: {}".format(args.n))
+        system("shuf -n {} {}.txt > {}_{}.txt".format(args.n, args.in_file, args.in_file, args.n))
+        args.in_file = "{}_{}".format(args.in_file, args.n)
+    add_null(args.in_file, args.out_file)
 
 if __name__ == "__main__":
     #infile, outfile = sys.argv[1:3]
