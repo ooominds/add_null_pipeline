@@ -3,6 +3,23 @@
 
 
 
+### Example commands:
+
+`>python3 add_null.py BNC_XML_2007/wst_c5 BNC_XML_2007/sen_wst_c5 test_null`
+
+Create a file ("_test_null.txt_") that is the same as "_wst_c5.txt_" but with null-article tags added.
+An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, this has the word/token tag pairs that make up the columns of "_wst_c5.txt_" as sentences that each occupy a line each.
+
+`>python3 add_null.py BNC_XML_2007/wst_c5 BNC_XML_2007/sen_wst_c5 test_null -sa -n 500`
+
+Create a file ("_test_null.txt_") that has **500 sentences sampled** from "_wst_c5.txt_" but with null-article tags added.
+An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, this has the word/token tag pairs that make up the columns of "_wst_c5.txt_" as sentences that each occupy a line each.
+
+`>python3 add_null.py BNC_XML_2007/wst_c5 BNC_XML_2007/sen_wst_c5 test_null -sr -n 200 -b 4 -a 5`
+
+Create a file ("_test_null.txt_") that has **200 sentences each with the previous 4 sentences and following 5 sentences sampled** from "_wst_c5.txt_" but with null-article tags added. An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, this has the word/token tag pairs that make up the columns of "_wst_c5.txt_" as sentences that each occupy a line each.
+
+
 ## Parameters
 
 og_file
