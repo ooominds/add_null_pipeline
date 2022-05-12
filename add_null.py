@@ -1,5 +1,3 @@
-#import sys
-from numpy import array, savetxt, transpose
 from nltk import RegexpParser, tree
 from os import system
 from os.path import exists
