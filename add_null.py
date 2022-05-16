@@ -1,10 +1,14 @@
 from nltk import RegexpParser, tree
-from os import system
-from os.path import exists
+from os import system, walk, mkdir, remove
+from os.path import exists, join
 from sys import argv
-import logging
 from subprocess import check_output
+from pickle import dump, load
+from time import sleep
+from random import sample
+
 import argparse
+import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("add_null")
@@ -67,7 +71,47 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
         #f.writelines(' '.join([tw[0] for tw in tagged_words]) + "\n")
         nf.close()
 
-def extract_all_sentences(cur_file, new_file):
+def extract_all_sen_w_source(cur_file, new_file):
+    f = open("{}.txt".format(new_file), 'w')
+    f.close()
+    sources = []
+    data_gen = (line for line in open("{}.txt".format(cur_file), 'r', encoding="utf-8"))
+    sen_count, sentence = 0, ""
+    sen_list = []
+    for line in data_gen:
+        #split the line into tags and tokens
+        source_id, token, tag  = line.strip('\n').split('\t')    
+        token = token.replace("'", "")
+        token = token.replace("\"", "#")
+        if token.strip() in ['.','?','!']:
+            sen_count += 1
+            sentence += '("{}", "{}")'.format(token, tag)
+            sen_list.append(sentence)
+            sentence = ""
+        else:
+            sentence += '("{}", "{}"),'.format(token, tag)
+        if sen_count == 200:
+            if not exists("temp_SOURCE_ID/{}.txt".format(source_id)):
+                f = open("temp_SOURCE_ID/{}.txt".format(source_id), 'w')
+                f.close()
+                sources.append(source_id)
+            with open("temp_SOURCE_ID/{}.txt".format(source_id), 'a') as nf:
+                for sentence in sen_list:
+                    nf.write('{},("{}", "SOURCE") \n'.format(sentence, source_id))                    
+            with open("{}.txt".format(new_file), 'a') as nf:
+                for sentence in sen_list:
+                    nf.write('{},("{}", "SOURCE") \n'.format(sentence, source_id))
+            sen_count = 0
+            sen_list = []
+            sentence = ""
+
+    with open("{}.txt".format(new_file), 'a') as nf:
+        for sentence in sen_list:
+            nf.write("{}".format(sentence))
+    with open("sources_list.pickle", "wb") as sl:
+        dump(sources, sl)
+
+def extract_all_sentences(cur_file, new_file, give_source):
     f = open("{}.txt".format(new_file), 'w')
     f.close()
 
@@ -94,9 +138,44 @@ def extract_all_sentences(cur_file, new_file):
                 sen_count = 0
                 sen_list = []
                 sentence = ""
+
     with open("{}.txt".format(new_file), 'a') as nf:
         for sentence in sen_list:
             nf.write("{}".format(sentence))
+
+
+def run_bash_comms(n, in_file, new_f, args):
+    if args.sa:
+        logger.info("Number of sampled sentences: {}".format(args.n))
+        system("shuf -n {} {}.txt >> {}.txt".format(n, in_file, new_file))
+    elif args.sr:
+        if args.c == -1:
+            #shuf -n temp_SOURCE_ID/KPH
+            system("shuf -n {} {}.txt | xargs -I % grep -v -B {} -A {} '%' {}.txt >> {}.txt".format(n, in_file, args.b, args.a, in_file, new_f))
+        else:
+            system("shuf -n {} {}.txt | xargs -I % grep -v -C {} '%' {}.txt >> {}.txt".format(n, in_file, args.c, in_file, new_f))
+
+def random_sample_range(args):
+    from math import ceil 
+    if args.so:
+        logger.info("Number of sampled sentences: {} \n sentences before: {} \n sentence after: {}".format(args.n, args.b, args.a))
+        new_f = "{}_sr_{}".format(args.in_file, args.n)
+        f = open("{}.txt".format(new_f), "w")
+        f.close()
+        print(new_f)
+
+        with open("sources_list.pickle", "rb") as sl:
+            sources = load(sl)
+        sample_sources = sample(sources, ceil(len(sources)/5))
+        sentence_per_file = ceil(len(sample_sources) / args.n)
+        for source in sample_sources:
+            run_bash_comms(sentence_per_file, "temp_SOURCE_ID/{}".format(source), new_f, args)
+    else:
+        new_f = "{}_sa_{}".format(args.in_file, args.n)
+        f = open("{}.txt".format(new_f), "w")
+        f.close()
+        run_bash_comms(args.n, args.in_file, new_f, args)
+    args.in_file = new_f
 
 # Maybe make a tagger later
 def add_tags(infile):
@@ -107,7 +186,6 @@ def add_tags(infile):
         sen_tagged = tag.pos_tag(sen_tokenized, tagset="claws5")
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('og_file', type=str, help='location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
     parser.add_argument('in_file', type=str, help='location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
@@ -115,6 +193,8 @@ def main():
     
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
     parser.add_argument('-sr', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
+    parser.add_argument('-so', action='store_true', help='Give the source ID of this sentence')
+
     parser.add_argument('-se', type=int, default=500, help='a random seed')
     parser.add_argument('-n', type=int, default=500, help='number of sentences to sample (requires sample flag to be set)')
     parser.add_argument('-c', type=int, default=-1, help='number of sentences before and after the sampled sentence to include')
@@ -126,28 +206,22 @@ def main():
     logger.info("Location of original POS-tagged file: {}".format(args.og_file))
     logger.info("Location of POS-tagged file as nltk-compatible sentences (per line): {}".format(args.in_file))
     logger.info("POS-tagged file with null-articles: {}".format(args.out_file))
-    
-    if not exists("{}.txt".format(args.in_file)):
-        extract_all_sentences(args.og_file, args.in_file)
-    else:
+    if exists("{}.txt".format(args.in_file)):
         logger.info("{} already exists, skipping sentence file creation step".format(args.in_file))
-    # Next use the following command in the Linux terminal: shuf -n 500 [infile].txt > [infile]_[n].txt
-    if args.sa:
-        logger.info("Number of smapled sentences: {}".format(args.n))
-        system("shuf -n {} {}.txt > {}_sa_{}.txt".format(args.n, args.in_file, args.in_file, args.n))
-        args.in_file = "{}_sa_{}".format(args.in_file, args.n)
-
-    elif args.sr:
-        if args.c == -1:
-            logger.info("Number of smapled sentences: {} \n sentences before: {} \n sentence after: {}".format(args.n, args.b, args.a))
-            system("shuf -n {} {}.txt | xargs -I % grep -F -B {} -A {} % {}.txt > {}_sr_{}.txt".format(args.n, args.in_file, args.b, args.a, args.in_file, args.in_file, args.n))
-            args.in_file = "{}_sr_{}".format(args.in_file, args.n)
+    else:
+        if args.so:
+            if not exists("temp_SOURCE_ID"):
+                mkdir("temp_SOURCE_ID")            
+            extract_all_sen_w_source(args.og_file, args.in_file)
         else:
-            logger.info("Number of smapled sentences: {} \n sentences before: {} \n sentence after: {}".format(args.n, args.c, args.c))
-            #p = check_output("shuf -n {} {}.txt | xargs -I % grep -C {} % {}.txt".format(args.n, args.in_file, args.c, args.in_file), shell=True)
-            #print(p)
-            system("shuf -n {} {}.txt | xargs -I % grep -F -C {} % {}.txt > {}_sr_{}.txt".format(args.n, args.in_file, args.c, args.in_file, args.in_file, args.n))
-            args.in_file = "{}_sr_{}".format(args.in_file, args.n)
+            extract_all_sentences(args.og_file, args.in_file)
+
+    if args.sa or args.sr:
+        random_sample_range(args)
+    #if exists("temp_SOURCE_ID"):
+    #    for root, dirs, files in os.walk("temp_SOURCE_ID"):
+    #        for file in files:
+    #            os.remove(os.path.join(root, file))
 
     add_null(args.in_file, args.out_file)
 
