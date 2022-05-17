@@ -166,8 +166,8 @@ def random_sample_range(args):
 
         with open("sources_list.pickle", "rb") as sl:
             sources = load(sl)
-        sample_sources = sample(sources, ceil(len(sources)/5))
-        sentence_per_file = ceil(len(sample_sources) / args.n)
+        sample_sources = sample(sources, 5)
+        sentence_per_file = ceil(args.n/len(sample_sources))
         for source in sample_sources:
             run_bash_comms(sentence_per_file, "temp_SOURCE_ID/{}".format(source), new_f, args)
     else:
