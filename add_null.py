@@ -163,12 +163,11 @@ def run_bash_comms(n, in_file, new_f, args):
             #p2=run(["grep", "-B", f"{args.b}", "-A", f"{args.a}", p1.stdout, f"{quote(in_file)}.txt"], stdin=p1.stdout,stdout=l)
             #l.close()
 
-            #print(f"shuf -n {n} {in_file}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {in_file}.txt >> {new_f}.txt; done;'")
-            print(n)
-            check_output(f"shuf -n {n} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
+            #print(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'")
+            check_output(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
             #p1 = Popen(["shuf", "-n"])
         else:
-            check_output(f"shuf -n {n} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep  -C {args.c} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
+            check_output(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep  -C {args.c} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
 
 def random_sample_range(args):
     from math import ceil 
