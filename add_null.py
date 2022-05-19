@@ -2,10 +2,11 @@ from nltk import RegexpParser, tree
 from os import system, walk, mkdir, remove
 from os.path import exists, join
 from sys import argv
-from subprocess import check_output
+from subprocess import run, check_output, Popen, PIPE
 from pickle import dump, load
 from time import sleep
 from random import sample
+from shlex import quote
 
 import argparse
 import logging
@@ -37,12 +38,15 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
             """
     data_read = (line for line in open("{}.txt".format(infile), 'r', encoding="utf-8"))
     with open("{}.txt".format(outfile), 'w', encoding="utf-8") as f:
-        nf = open("{}.txt".format(nphrase_file), 'w', encoding="utf-8")
+        #nf = open("{}.txt".format(nphrase_file), 'w', encoding="utf-8")
         for line in data_read:
             #the line is a string in the form of tuples that represent a word and tag pair
             if '\\' in line:
                 line = line.replace('\\', '#')
-            line = "[{}]".format(line)
+            if '--' in line:
+                continue
+            line = line[:-2]
+            line = f"[{line}]"
             eval_line = eval(line)
             #print(eval_line)
             #to store a sentence
@@ -64,12 +68,12 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
                     tagged_words.append(n)
             for pair in tagged_words:
                 f.write("{}\t{}\n".format(pair[0], pair[1]))
-            nf.writelines(' '.join(sen))
+            #nf.writelines(' '.join(sen))
 
         #output_arr = transpose(array([array([w for w,t in tagged_words]), array([t for w,t in tagged_words])]))
         #savetxt("%s.txt"%(outfile), output_arr, delimiter = "\t", encoding="utf-8", fmt='%s')
         #f.writelines(' '.join([tw[0] for tw in tagged_words]) + "\n")
-        nf.close()
+        #nf.close()
 
 def extract_all_sen_w_source(cur_file, new_file):
     f = open("{}.txt".format(new_file), 'w')
@@ -146,21 +150,32 @@ def extract_all_sentences(cur_file, new_file, give_source):
 
 def run_bash_comms(n, in_file, new_f, args):
     if args.sa:
-        logger.info("Number of sampled sentences: {}".format(args.n))
-        system("shuf -n {} {}.txt >> {}.txt".format(n, in_file, new_file))
+        logger.info(f"Number of sampled sentences: {args.n}")
+        check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt")
     elif args.sr:
+        delim = "$\n"
+        bash_args = '"$arg"'
         if args.c == -1:
             #shuf -n temp_SOURCE_ID/KPH
-            system("shuf -n {} {}.txt | xargs -I % grep -v -B {} -A {} '%' {}.txt >> {}.txt".format(n, in_file, args.b, args.a, in_file, new_f))
+            #shuf -n {} {}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ > source_sen.txt; grep -C 2 "$arg" {} >> {}.txt; done;'
+            #p1=Popen(["shuf", "-n", f"{n}", f"{quote(in_file)}.txt"], stdout=PIPE)
+            #l = open(f"{quote(new_f)}.txt", "w")
+            #p2=run(["grep", "-B", f"{args.b}", "-A", f"{args.a}", p1.stdout, f"{quote(in_file)}.txt"], stdin=p1.stdout,stdout=l)
+            #l.close()
+
+            #print(f"shuf -n {n} {in_file}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {in_file}.txt >> {new_f}.txt; done;'")
+            print(n)
+            check_output(f"shuf -n {n} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
+            #p1 = Popen(["shuf", "-n"])
         else:
-            system("shuf -n {} {}.txt | xargs -I % grep -v -C {} '%' {}.txt >> {}.txt".format(n, in_file, args.c, in_file, new_f))
+            check_output(f"shuf -n {n} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep  -C {args.c} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
 
 def random_sample_range(args):
     from math import ceil 
     if args.so:
-        logger.info("Number of sampled sentences: {} \n sentences before: {} \n sentence after: {}".format(args.n, args.b, args.a))
-        new_f = "{}_sr_{}".format(args.in_file, args.n)
-        f = open("{}.txt".format(new_f), "w")
+        logger.info(f"Number of sampled sentences: {args.n} \n sentences before: {args.b} \n sentence after: {args.a}")
+        new_f = f"{args.in_file}_sr_{args.n}"
+        f = open(f"{new_f}.txt", "w")
         f.close()
         print(new_f)
 
@@ -168,8 +183,10 @@ def random_sample_range(args):
             sources = load(sl)
         sample_sources = sample(sources, 5)
         sentence_per_file = ceil(args.n/len(sample_sources))
+        check_output("truncate -s 0 source_sen.txt", shell=True)
+        check_output(f"truncate -s 0 {quote(new_f)}.txt", shell=True)
         for source in sample_sources:
-            run_bash_comms(sentence_per_file, "temp_SOURCE_ID/{}".format(source), new_f, args)
+            run_bash_comms(sentence_per_file, f"temp_SOURCE_ID/{source}", new_f, args)
     else:
         new_f = "{}_sa_{}".format(args.in_file, args.n)
         f = open("{}.txt".format(new_f), "w")
@@ -187,9 +204,9 @@ def add_tags(infile):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('og_file', type=str, help='location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
-    parser.add_argument('in_file', type=str, help='location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
-    parser.add_argument('out_file', type=str, help='location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
+    parser.add_argument('og_file', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    parser.add_argument('in_file', type=str, help='CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
+    parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
     
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
     parser.add_argument('-sr', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
