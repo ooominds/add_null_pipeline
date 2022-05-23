@@ -1,6 +1,19 @@
 from add_null import extract_all_sentences
+from random import shuffle
 from pickle import load
 from pandas import DataFrame
+
+def add_article_tag(line):
+    articles = []
+    for i, double in enumerate(line):
+        if double[1] == "AT0":
+            articles.append(i)
+    shuffle(articles)
+    chosen_article = articles[0]
+    line[chosen_article] = (f"_{line[chosen_article][0]}_", line[chosen_article][1])
+    return line
+
+
 
 def create_excel(input_file, output_file, target_file, sen_markers = ['.','?','!']):
     data_read = (line for line in open("{}.txt".format(input_file), 'r', encoding="utf-8"))
@@ -25,6 +38,7 @@ def create_excel(input_file, output_file, target_file, sen_markers = ['.','?','!
             target_code = -1
         else:
             target_code = 0
+            eval_line = add_article_tag(eval_line)
         if cur_code != target_code and cur_code != 2:
             targets.append(cur_code)
             sourceIDs.append(sourceID)
