@@ -75,26 +75,26 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
         #f.writelines(' '.join([tw[0] for tw in tagged_words]) + "\n")
         #nf.close()
 
-def extract_all_sen_w_source(cur_file, new_file):
+def extract_all_sen_w_source(cur_file, new_file, sen_markers = ['.','?','!']):
     f = open("{}.txt".format(new_file), 'w')
     f.close()
     sources = []
     data_gen = (line for line in open("{}.txt".format(cur_file), 'r', encoding="utf-8"))
-    sen_count, sentence = 0, ""
+    sen_complete, sentence = False, ""
     sen_list = []
     for line in data_gen:
         #split the line into tags and tokens
-        source_id, token, tag  = line.strip('\n').split('\t')    
-        token = token.replace("'", "")
-        token = token.replace("\"", "#")
-        if token.strip() in ['.','?','!']:
-            sen_count += 1
+        source_id, token, tag  = line.strip('\n').split('\t')
+        token = token.replace("'", "APOST")
+        token = token.replace('"', "SPCHMRK")
+        if token.strip() in sen_markers:
+            sen_complete = True
             sentence += '("{}", "{}")'.format(token, tag)
             sen_list.append(sentence)
             sentence = ""
         else:
             sentence += '("{}", "{}"),'.format(token, tag)
-        if sen_count == 200:
+        if sen_complete:
             if not exists("temp_SOURCE_ID/{}.txt".format(source_id)):
                 f = open("temp_SOURCE_ID/{}.txt".format(source_id), 'w')
                 f.close()
@@ -105,7 +105,7 @@ def extract_all_sen_w_source(cur_file, new_file):
             with open("{}.txt".format(new_file), 'a') as nf:
                 for sentence in sen_list:
                     nf.write('{},("{}", "SOURCE") \n'.format(sentence, source_id))
-            sen_count = 0
+            sen_complete = False
             sen_list = []
             sentence = ""
 
@@ -115,31 +115,31 @@ def extract_all_sen_w_source(cur_file, new_file):
     with open("sources_list.pickle", "wb") as sl:
         dump(sources, sl)
 
-def extract_all_sentences(cur_file, new_file, give_source):
+def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!']):
     f = open("{}.txt".format(new_file), 'w')
     f.close()
 
     data_gen = (line for line in open("{}.txt".format(cur_file), 'r', encoding="utf-8"))
-    sen_count, sentence = 0, ""
+    sen_complete, sentence = False, ""
     sen_list = []
     for line in data_gen:
         #split the line into tags and tokens
         #marks a complete sentence
         token, tag  = line.strip('\n').split('\t')
-        token = token.replace("'", "")
-        token = token.replace("\"", "#")
-        if token.strip() in ['.','?','!']:
-            sen_count += 1
+        token = token.replace("'", "APOST")
+        token = token.replace('"', "SPCHMRK")
+        if token.strip() in sen_markers:
+            sen_complete = True
             sentence += '("{}", "{}")'.format(token, tag)
             sen_list.append(sentence)
             sentence = ""
         else:
             sentence += '("{}", "{}"),'.format(token, tag)
-        if sen_count == 200:
+        if sen_complete:
             with open("{}.txt".format(new_file), 'a') as nf:
                 for sentence in sen_list:
                     nf.write("{}\n".format(sentence))
-                sen_count = 0
+                sen_complete = False
                 sen_list = []
                 sentence = ""
 
@@ -151,10 +151,11 @@ def extract_all_sentences(cur_file, new_file, give_source):
 def run_bash_comms(n, in_file, new_f, args):
     if args.sa:
         logger.info(f"Number of sampled sentences: {args.n}")
-        check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt")
+        check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt", shell=True)
     elif args.sr:
         delim = "$\n"
-        bash_args = '"$arg"'
+        print(f"shuf -n {n} {quote(in_file)}.txt | >> source_sen.txt")
+        check_output(f"shuf -n {n} {quote(in_file)}.txt >> source_sen.txt", shell=True)
         if args.c == -1:
             #shuf -n temp_SOURCE_ID/KPH
             #shuf -n {} {}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ > source_sen.txt; grep -C 2 "$arg" {} >> {}.txt; done;'
@@ -164,10 +165,17 @@ def run_bash_comms(n, in_file, new_f, args):
             #l.close()
 
             #print(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'")
-            check_output(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
+            sample_sentences = (line for line in open("source_sen.txt", 'r', encoding="utf-8"))
+            for line in sample_sentences:
+                bash_args = f"'{line[:-1]}'"
+                source_file =f"temp_SOURCE_ID/{line[-17:-14]}.txt"
+                #print(f"grep -B {args.b} -A {args.a} {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt")
+                check_output(f"grep -B {args.b} -A {args.a} -x {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt", shell=True)
             #p1 = Popen(["shuf", "-n"])
         else:
-            check_output(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep  -C {args.c} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'", shell=True)
+            for line in sources_file:
+                bash_args = f"'{line[:-22]}'"
+                check_output(f"grep  -C {args.c} -x {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt", shell=True)
 
 def random_sample_range(args):
     from math import ceil 
@@ -176,16 +184,17 @@ def random_sample_range(args):
         new_f = f"{args.in_file}_sr_{args.n}"
         f = open(f"{new_f}.txt", "w")
         f.close()
-        print(new_f)
+        #print(new_f)
 
-        with open("sources_list.pickle", "rb") as sl:
-            sources = load(sl)
-        sample_sources = sample(sources, 5)
-        sentence_per_file = ceil(args.n/len(sample_sources))
+        #with open("sources_list.pickle", "rb") as sl:
+        #    sources = load(sl)
+        #sample_sources = sample(sources, 5)
+        #sentence_per_file = ceil(args.n/len(sample_sources))
         check_output("truncate -s 0 source_sen.txt", shell=True)
         check_output(f"truncate -s 0 {quote(new_f)}.txt", shell=True)
-        for source in sample_sources:
-            run_bash_comms(sentence_per_file, f"temp_SOURCE_ID/{source}", new_f, args)
+        #for source in sample_sources:
+        #    run_bash_comms(args.n, f"temp_SOURCE_ID/{source}", new_f, args)
+        run_bash_comms(args.n, args.in_file, new_f, args)
     else:
         new_f = "{}_sa_{}".format(args.in_file, args.n)
         f = open("{}.txt".format(new_f), "w")

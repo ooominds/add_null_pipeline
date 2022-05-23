@@ -1,0 +1,6 @@
+("Monday", "NP0"),(".", "PUN"),("KPE", "SOURCE")
+("was", "VBD"),("this", "DT0"),(".", "PUN"),("KPE", "SOURCE")
+("Er", "UNC"),("Ah", "ITJ"),(".", "PUN"),("KPE", "SOURCE")
+("lucky", "AJ0"),("for", "PRP"),("him", "PNP"),(".", "PUN"),("KPE", "SOURCE")
+("He", "PNP"),("*s", "VHZ"),("got", "VVN"),("Are", "VBB"),("you", "PNP"),("stuck", "VVN"),("?", "PUN"),("KPE", "SOURCE")
+("Why", "AVQ"),("?", "PUN"),("KPE", "SOURCE")
