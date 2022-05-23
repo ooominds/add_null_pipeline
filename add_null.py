@@ -154,9 +154,12 @@ def run_bash_comms(n, in_file, new_f, args):
         check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt", shell=True)
     elif args.sr:
         delim = "$\n"
-        print(f"shuf -n {n} {quote(in_file)}.txt | >> source_sen.txt")
-        check_output(f"shuf -n {n} {quote(in_file)}.txt >> source_sen.txt", shell=True)
+        print(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt")
+        check_output(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt", shell=True)
         if args.c == -1:
+            b, a= args.b, args.a
+        else:
+            b, a = args.c, args.c
             #shuf -n temp_SOURCE_ID/KPH
             #shuf -n {} {}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ > source_sen.txt; grep -C 2 "$arg" {} >> {}.txt; done;'
             #p1=Popen(["shuf", "-n", f"{n}", f"{quote(in_file)}.txt"], stdout=PIPE)
@@ -165,17 +168,38 @@ def run_bash_comms(n, in_file, new_f, args):
             #l.close()
 
             #print(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'")
-            sample_sentences = (line for line in open("source_sen.txt", 'r', encoding="utf-8"))
-            for line in sample_sentences:
-                bash_args = f"'{line[:-1]}'"
-                source_file =f"temp_SOURCE_ID/{line[-17:-14]}.txt"
-                #print(f"grep -B {args.b} -A {args.a} {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt")
-                check_output(f"grep -B {args.b} -A {args.a} -x {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt", shell=True)
+        sample_sentences = (line for line in open("source_sen.txt", 'r', encoding="utf-8"))
+        for line in sample_sentences:
+            #bash_args = f"'{line[:-1]}'"
+            bash_args = f"{line[:-1]}"
+            source_file =f"temp_SOURCE_ID/{line[-17:-14]}.txt"
+            #print(f"grep -B {args.b} -A {args.a} {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt")
+            #check_output(f"grep -B {args.b} -A {args.a} -x {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt", shell=True)
+            with open(source_file, 'r') as f:
+                lines_list = f.readlines()
+                for i, line in enumerate(lines_list):
+                    if bash_args.strip("\n") == line.strip("\n"):
+                        target_line = '("TARGET", "TARGET"),' + line
+                        if i-b > 0:
+                            span_b = ['("CONTEXTB", "CONTEXTB"),' + line for line in lines_list[i-b:i]]
+                        else:
+                            span_b = ['("CONTEXTB", "CONTEXTB"),' + line for line in lines_list[0:i]]
+                        if i+a < len(lines_list):
+                            span_a = ['("CONTEXTA", "CONTEXTA"),' + line for line in lines_list[i+1:i+a+1]]
+                        else:
+                            span_a = ['("CONTEXTA", "CONTEXTA"),' + line for line in lines_list[i:len(lines_list)-1]]
+                        span_b.append(target_line)
+                        span = span_b + span_a
+                        with open(f"{new_f}.txt", 'a') as nf:
+                            for line in span:
+                                nf.write(line)
+                        break
+
             #p1 = Popen(["shuf", "-n"])
-        else:
-            for line in sources_file:
-                bash_args = f"'{line[:-22]}'"
-                check_output(f"grep  -C {args.c} -x {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt", shell=True)
+        #else:
+         #   for line in sources_file:
+          #      bash_args = f"'{line[:-22]}'"
+           #     check_output(f"grep  -C {args.c} -x {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt", shell=True)
 
 def random_sample_range(args):
     from math import ceil 
