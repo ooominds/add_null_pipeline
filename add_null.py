@@ -1,10 +1,8 @@
 from nltk import RegexpParser, tree
-from os import system, walk, mkdir, remove
+from os import mkdir
 from os.path import exists, join
-from sys import argv
-from subprocess import run, check_output, Popen, PIPE
+from subprocess import run, check_output
 from pickle import dump, load
-from time import sleep
 from random import sample
 from shlex import quote
 
@@ -22,7 +20,23 @@ def apply_grammar(grammar, line):
     return cp.parse(line)
 
 
-def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphrase_file='rndm'):
+def add_null(in_file="200_extra_sentences.txt", out_file="nulled_sentences"):
+    """
+        FUNCTION:
+        ---------------
+            Creates an "out_file" that is the result of adding null article tags and tokens to the file specified by the path "in_file"
+        
+        PARAMETERS
+        ---------------
+            in_file: the location of the input file from which sentences are extracted.
+            out_file: the file path for the output
+
+        OUTPUT(s)
+        ---------------
+            files:
+                out_file: A file in the format of the og_file but with null article tags added
+            return: None    
+    """
     # Grammar rules were arrived at from the noun-phrase finding,
     # Strictly speaking: not all of them are necessary for the naive null-tagger
     grammar = r"""
@@ -36,9 +50,8 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
             NPR4: {<AT.*|DT0><AJ.*|PP\$|DP.*|AV.*|>*<NN.*|VVB-NN.*|NP0-NN.*>+}
             NullNPR4: {<AJ.*>*<NN.*|VVB-NN.*|NP0-NN.*>+}
             """
-    data_read = (line for line in open("{}.txt".format(infile), 'r', encoding="utf-8"))
-    with open("{}.txt".format(outfile), 'w', encoding="utf-8") as f:
-        #nf = open("{}.txt".format(nphrase_file), 'w', encoding="utf-8")
+    data_read = (line for line in open(f"{quote(in_file)}.txt", 'r', encoding="utf-8"))
+    with open(f"{quote(out_file)}.txt", 'w', encoding="utf-8") as f:
         for line in data_read:
             #the line is a string in the form of tuples that represent a word and tag pair
             if '\\' in line:
@@ -48,7 +61,6 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
             line = line[:-2]
             line = f"[{line}]"
             eval_line = eval(line)
-            #print(eval_line)
             #to store a sentence
             sen, tagged_words = [], []
             noun_chunk = apply_grammar(grammar, eval_line)
@@ -68,91 +80,119 @@ def add_null(infile="200_extra_sentences.txt", outfile="nulled_sentences",  nphr
                     tagged_words.append(n)
             for pair in tagged_words:
                 f.write("{}\t{}\n".format(pair[0], pair[1]))
-            #nf.writelines(' '.join(sen))
 
-        #output_arr = transpose(array([array([w for w,t in tagged_words]), array([t for w,t in tagged_words])]))
-        #savetxt("%s.txt"%(outfile), output_arr, delimiter = "\t", encoding="utf-8", fmt='%s')
-        #f.writelines(' '.join([tw[0] for tw in tagged_words]) + "\n")
-        #nf.close()
 
-def extract_all_sen_w_source(cur_file, new_file, sen_markers = ['.','?','!']):
-    f = open("{}.txt".format(new_file), 'w')
-    f.close()
-    sources = []
-    data_gen = (line for line in open("{}.txt".format(cur_file), 'r', encoding="utf-8"))
-    sen_complete, sentence = False, ""
-    sen_list = []
-    for line in data_gen:
-        #split the line into tags and tokens
-        source_id, token, tag  = line.strip('\n').split('\t')
-        token = token.replace("'", "APOST")
-        token = token.replace('"', "SPCHMRK")
-        if token.strip() in sen_markers:
-            sen_complete = True
-            sentence += '("{}", "{}")'.format(token, tag)
-            sen_list.append(sentence)
-            sentence = ""
-        else:
-            sentence += '("{}", "{}"),'.format(token, tag)
-        if sen_complete:
-            if not exists("temp_SOURCE_ID/{}.txt".format(source_id)):
-                f = open("temp_SOURCE_ID/{}.txt".format(source_id), 'w')
-                f.close()
-                sources.append(source_id)
-            with open("temp_SOURCE_ID/{}.txt".format(source_id), 'a') as nf:
-                for sentence in sen_list:
-                    nf.write('{},("{}", "SOURCE") \n'.format(sentence, source_id))                    
-            with open("{}.txt".format(new_file), 'a') as nf:
-                for sentence in sen_list:
-                    nf.write('{},("{}", "SOURCE") \n'.format(sentence, source_id))
-            sen_complete = False
-            sen_list = []
-            sentence = ""
+def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_source=False):
+    """
+        FUNCTION:
+        ---------------
+            Extract sentences from "cur_file" and if "keep_source" = True, the tag for the source file is used to create
+            additional files and a temporary folder called "temp_SOURCE_ID" located in the directory the command was run from.
+            The additional source files are named after the tag associated with the sentences in the file. For example sentences with a source "XYZ"
+            are stored in a file called XYZ.txt which can be found in the temp_SOURCE_ID folder.
+        
+        PARAMETERS
+        ---------------
+            cur_file: the location of the input file from which sentences are extracted.
+            new_file: the location of a file of sentences extracted from cur_file (to be created).
+            sen_markers: The symbols that demarcate the end of a sentence.
+            keep_source: Whether to keep the sources (in individual files) and create the temp_SOURCE_ID directory
 
-    with open("{}.txt".format(new_file), 'a') as nf:
-        for sentence in sen_list:
-            nf.write("{}".format(sentence))
-    with open("sources_list.pickle", "wb") as sl:
-        dump(sources, sl)
+        OUTPUT(s)
+        ---------------
+            operations:
+                if keep_source:
+                    - sources files in a folder called "temp_SOURCE_ID".
+                A file is created as referenced by the "new_file" variable.
+            files:
+                sources_list.pickle: a file that stores a list of all the sources.
+                if keep_source:
+                    - sources files in a folder called "temp_SOURCE_ID".
+                A file is created as referenced by the "new_file" variable.
+            return: None
 
-def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!']):
-    f = open("{}.txt".format(new_file), 'w')
+    """
+    f = open(f"{quote(new_file)}.txt", 'w')
     f.close()
 
-    data_gen = (line for line in open("{}.txt".format(cur_file), 'r', encoding="utf-8"))
+    data_gen = (line for line in open(f"{quote(cur_file)}.txt", 'r', encoding="utf-8"))
     sen_complete, sentence = False, ""
     sen_list = []
     for line in data_gen:
         #split the line into tags and tokens
         #marks a complete sentence
-        token, tag  = line.strip('\n').split('\t')
+        if keep_source:
+            source_id, token, tag  = line.strip('\n').split('\t')
+        else:
+            token, tag  = line.strip('\n').split('\t')
         token = token.replace("'", "APOST")
         token = token.replace('"', "SPCHMRK")
         if token.strip() in sen_markers:
             sen_complete = True
-            sentence += '("{}", "{}")'.format(token, tag)
+            sentence += f'("{token}", "{tag}")'
             sen_list.append(sentence)
             sentence = ""
         else:
-            sentence += '("{}", "{}"),'.format(token, tag)
+            sentence += f'("{token}", "{tag}"),'
         if sen_complete:
-            with open("{}.txt".format(new_file), 'a') as nf:
-                for sentence in sen_list:
-                    nf.write("{}\n".format(sentence))
+            if keep_source:
+                if not exists(f"temp_SOURCE_ID/{quote(source_id)}.txt"):
+                    f = open(f"temp_SOURCE_ID/{quote(source_id)}.txt", 'w')
+                    f.close()
+                    sources.append(source_id)
+                with open(f"temp_SOURCE_ID/{quote(source_id)}.txt", 'a') as nf:
+                    for sentence in sen_list:
+                        nf.write(f'{sentence},("{quote(source_id)}", "SOURCE") \n')                    
+            with open(f"{quote(new_file)}.txt", 'a') as nf:
+                if keep_source:
+                    for sentence in sen_list:
+                        nf.write(f'{sentence},("{quote(source_id)}", "SOURCE") \n')
+                else:
+                    for sentence in sen_list:
+                        nf.write("{}\n".format(sentence))
                 sen_complete = False
                 sen_list = []
                 sentence = ""
 
-    with open("{}.txt".format(new_file), 'a') as nf:
+    with open(f"{quote(new_file)}.txt", 'a') as nf:
         for sentence in sen_list:
-            nf.write("{}".format(sentence))
-
+            nf.write(f"{sentence}")
+    if keep_source:
+        with open("sources_list.pickle", "wb") as sl:
+            dump(sources, sl)
 
 def run_bash_comms(n, in_file, new_f, args):
+    """
+        FUNCTION:
+        ---------------
+            Runs bash commands (shuf and grep) to obtain a sample of "n" sentences from the file referenced by "in_file"
+            if args.con == True then the context of the "n" sampled sentences are also obtained.
+            The results are stored in a new file "new_f"
+        
+        PARAMETERS
+        ---------------
+            n: number of sentences to sample
+            in_file: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag 
+            new_f: location of sampled sentences (and optionally: the context with context tags for each sentence)
+            args: parameter arguments that are passed into the function when the code is run from a terminal.
+
+            Relevant parameters are:
+                args.in_file: Location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
+                args.con: Whether to sample the context
+                args.n: Number of sentences to sample from args.in_file
+
+        OUTPUT(s)
+        ---------------
+            operations:
+            files:
+                source_sen.txt: a file that stores all the sampled sentences without their context.
+                new_f: .txt file of sampled sentences (and optionally: the context with context tags for each sentence)
+            return: None
+    """
     if args.sa:
         logger.info(f"Number of sampled sentences: {args.n}")
         check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt", shell=True)
-    elif args.sr:
+    elif args.con:
         delim = "$\n"
         print(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt")
         check_output(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt", shell=True)
@@ -160,24 +200,16 @@ def run_bash_comms(n, in_file, new_f, args):
             b, a= args.b, args.a
         else:
             b, a = args.c, args.c
-            #shuf -n temp_SOURCE_ID/KPH
-            #shuf -n {} {}.txt | xargs -d $'\n' sh -c 'for arg do echo $arg$ > source_sen.txt; grep -C 2 "$arg" {} >> {}.txt; done;'
-            #p1=Popen(["shuf", "-n", f"{n}", f"{quote(in_file)}.txt"], stdout=PIPE)
-            #l = open(f"{quote(new_f)}.txt", "w")
-            #p2=run(["grep", "-B", f"{args.b}", "-A", f"{args.a}", p1.stdout, f"{quote(in_file)}.txt"], stdin=p1.stdout,stdout=l)
-            #l.close()
-
-            #print(f"shuf -n {n+1} {quote(in_file)}.txt | xargs -d '\\n' sh -c 'for arg do echo $arg$ >> source_sen.txt; grep -B {args.b} -A {args.a} {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt; done;'")
+        
         sample_sentences = (line for line in open("source_sen.txt", 'r', encoding="utf-8"))
         for line in sample_sentences:
-            #bash_args = f"'{line[:-1]}'"
             bash_args = f"{line[:-1]}"
             source_file =f"temp_SOURCE_ID/{line[-17:-14]}.txt"
-            #print(f"grep -B {args.b} -A {args.a} {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt")
-            #check_output(f"grep -B {args.b} -A {args.a} -x {bash_args} {quote(source_file)} | head -n 7 >> {quote(new_f)}.txt", shell=True)
             with open(source_file, 'r') as f:
                 lines_list = f.readlines()
                 for i, line in enumerate(lines_list):
+                    
+                    # assigning context token
                     if bash_args.strip("\n") == line.strip("\n"):
                         target_line = '("TARGET", "TARGET"),' + line
                         if i-b > 0:
@@ -195,53 +227,68 @@ def run_bash_comms(n, in_file, new_f, args):
                                 nf.write(line)
                         break
 
-            #p1 = Popen(["shuf", "-n"])
-        #else:
-         #   for line in sources_file:
-          #      bash_args = f"'{line[:-22]}'"
-           #     check_output(f"grep  -C {args.c} -x {bash_args} {quote(in_file)}.txt | head -n 7 >> {quote(new_f)}.txt", shell=True)
-
 def random_sample_range(args):
+    """
+        FUNCTION:
+        ---------------
+            From the sentences found in args.in_file, a random sample of size args.n sentences is taken from several source files, context is added to each depending on
+            the range specified by either args.c or a combination of args.b and args.a.
+
+        PARAMETERS
+        ---------------
+            args: parameter arguments that are passed into the function when the code is run from a terminal.
+
+            Relevant parameters are:
+                args.in_file: Location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
+                args.so: Whether the sources of each sentence is being stored or not
+                args.n: Number of sentences to sample from args.in_file
+        
+        OUTPUT(s)
+        ---------------
+            operations: reassigns the value of args.in_file to a new file (new_f) that contains sampled sentences with context tags
+            files:
+            return: None
+    """
     from math import ceil 
     if args.so:
         logger.info(f"Number of sampled sentences: {args.n} \n sentences before: {args.b} \n sentence after: {args.a}")
-        new_f = f"{args.in_file}_sr_{args.n}"
-        f = open(f"{new_f}.txt", "w")
+        new_f = f"{quote(args.in_file)}_sr_{args.n}"
+        f = open(f"{quote(new_f)}.txt", "w")
         f.close()
-        #print(new_f)
 
-        #with open("sources_list.pickle", "rb") as sl:
-        #    sources = load(sl)
-        #sample_sources = sample(sources, 5)
-        #sentence_per_file = ceil(args.n/len(sample_sources))
+        # Remove the file that stores the sampled sentences each run
         check_output("truncate -s 0 source_sen.txt", shell=True)
+        # Remove the file that stores the sampled sentences and their context each run
         check_output(f"truncate -s 0 {quote(new_f)}.txt", shell=True)
-        #for source in sample_sources:
-        #    run_bash_comms(args.n, f"temp_SOURCE_ID/{source}", new_f, args)
+
+        # Get the context of sampled sentences
         run_bash_comms(args.n, args.in_file, new_f, args)
     else:
-        new_f = "{}_sa_{}".format(args.in_file, args.n)
-        f = open("{}.txt".format(new_f), "w")
+        new_f = f"{quote(args.in_file)}_sa_{args.n}"
+        f = open(f"{quote(new_f)}.txt", "w")
         f.close()
         run_bash_comms(args.n, args.in_file, new_f, args)
     args.in_file = new_f
 
 # Maybe make a tagger later
-def add_tags(infile):
-    from nltk import tag, word_tokenize
-    txt_file = (line for line in open("{}.txt".format(infile), 'r', encoding="utf-8"))
-    for line in txt_file:
-        sen_tokenized = word_tokenize(line)
-        sen_tagged = tag.pos_tag(sen_tokenized, tagset="claws5")
+def add_tags(in_file):
+    raise NotImplementedError
+    #from nltk import tag, word_tokenize
+    #txt_file = (line for line in open(f"{quote(in_file)}.txt", 'r', encoding="utf-8"))
+    #for line in txt_file:
+    #    sen_tokenized = word_tokenize(line)
+    #    sen_tagged = tag.pos_tag(sen_tokenized, tagset="claws5")
 
 def main():
+
+    # Various arguments that are passed into the code
     parser = argparse.ArgumentParser()
     parser.add_argument('og_file', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
     parser.add_argument('in_file', type=str, help='CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
     parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
     
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
-    parser.add_argument('-sr', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
+    parser.add_argument('-con', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
     parser.add_argument('-so', action='store_true', help='Give the source ID of this sentence')
 
     parser.add_argument('-se', type=int, default=500, help='a random seed')
@@ -252,33 +299,25 @@ def main():
 
     args = parser.parse_args()
 
-    logger.info("Location of original POS-tagged file: {}".format(args.og_file))
-    logger.info("Location of POS-tagged file as nltk-compatible sentences (per line): {}".format(args.in_file))
-    logger.info("POS-tagged file with null-articles: {}".format(args.out_file))
-    if exists("{}.txt".format(args.in_file)):
-        logger.info("{} already exists, skipping sentence file creation step".format(args.in_file))
+    logger.info(f"Location of original POS-tagged file: {quote(args.og_file)}")
+    logger.info(f"Location of POS-tagged file as nltk-compatible sentences (per line): {quote(args.in_file)}")
+    logger.info(f"POS-tagged file with null-articles: {quote(args.out_file)}")
+    if exists(f"{quote(args.in_file)}.txt"):
+        logger.info(f"{quote(args.in_file)} already exists, skipping sentence file creation step")
     else:
         if args.so:
             if not exists("temp_SOURCE_ID"):
                 mkdir("temp_SOURCE_ID")            
-            extract_all_sen_w_source(args.og_file, args.in_file)
+            extract_all_sentences(args.og_file, args.in_file, keep_source=True)
         else:
             extract_all_sentences(args.og_file, args.in_file)
 
-    if args.sa or args.sr:
+    if args.sa or args.con:
         random_sample_range(args)
-    #if exists("temp_SOURCE_ID"):
-    #    for root, dirs, files in os.walk("temp_SOURCE_ID"):
-    #        for file in files:
-    #            os.remove(os.path.join(root, file))
 
     add_null(args.in_file, args.out_file)
 
 if __name__ == "__main__":
-    #shuf stagged_c5_500.txt -n 5 | grep -B 6 stagged_c5_500.txt
-    #shuf stagged_c5_500.txt -n 2 | xargs -I % grep -B 1 -A 1 % stagged_c5_500.txt
-    #infile, outfile = sys.argv[1:3]
-    #main(infile, outfile)
     main()
 
 

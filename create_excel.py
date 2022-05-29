@@ -22,14 +22,6 @@ def create_excel(input_file, output_file, target_file, sen_markers = ['.','?','!
     sen = ""
     cur_code = 2
     for line in data_read:
-        #targets_read = (line for line in open("{}.txt".format(target_file), 'r', encoding="utf-8"))
-        #for target in targets_read:
-        #    reduced_line = line.strip("\n")
-        #    reduced_line = reduced_line.replace('("ø", "AT0"),', '')
-            #print(reduced_line)
-        #    if eval(f'[{reduced_line}]') == eval(f'[{target}]'):
-        #        target_code = 1
-
         line = f"[{line}]"
         eval_line = eval(line)
         if eval_line[0][0] == "CONTEXTA":
@@ -70,8 +62,6 @@ def main():
     output_file = "sampled_sens"
     input_file = "temp_sens"
     target_file = "source_sen"
-    #input_file = "dummy_source"
-    #target_file = "dummy_target"
 
     with open("sources_list.pickle", "rb") as sl:
         sources = load(sl)
