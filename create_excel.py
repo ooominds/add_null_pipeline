@@ -4,6 +4,19 @@ from pickle import load
 from pandas import DataFrame
 
 def add_article_tag(line):
+    """
+        FUNCTION:
+        ---------------
+            adds a marker to a random article in a line (sentence)
+        
+        PARAMETERS
+        ---------------
+            line: a sentence that will have one of its null articles marked
+
+        OUTPUT(s)
+        ---------------
+            a line with a marked null article
+    """
     articles = []
     for i, double in enumerate(line):
         if double[1] == "AT0":
@@ -13,9 +26,23 @@ def add_article_tag(line):
     line[chosen_article] = (f"_{line[chosen_article][0]}_", line[chosen_article][1])
     return line
 
-
-
-def create_excel(input_file, output_file, target_file, sen_markers = ['.','?','!']):
+def create_excel(input_file, output_file, target_file="source_sen", sen_markers = ['.','?','!']):
+    """
+        FUNCTION:
+        ---------------
+            create an excel file with sampled sentences surrounded by their context sentences.
+        
+        PARAMETERS
+        ---------------
+            input_file:
+                a .txt file created by the "extract_all_sentences" function
+            output_file:
+                path of the file the output should be written to
+            target_file:
+                path to the location of the file with the target sentences (default as source_sen.txt)
+        OUTPUT(s)
+        ---------------
+    """
     data_read = (line for line in open("{}.txt".format(input_file), 'r', encoding="utf-8"))
     data_dic = {}
     targets, sourceIDs, sentences = [], [], []
@@ -55,18 +82,24 @@ def create_excel(input_file, output_file, target_file, sen_markers = ['.','?','!
     data_dic["ID"] = sourceIDs
     data_dic["Sentence"] = sentences
     data_df = DataFrame(data_dic)
-    data_df.to_excel("output_file.xlsx", index=False)
+    data_df.to_excel(f"{output_file}.xlsx", index=False)
 
 def main():
-    og_file = "may_16_test_null"
-    output_file = "sampled_sens"
-    input_file = "temp_sens"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-inpt', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
+    parser.add_argument('-otpt', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
+    parser.add_argument('-ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    parser.add_argument('-sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
+
+    args = parser.parse_args()
+    output_file = "output"
+    aux_file = "temp_sens"
     target_file = "source_sen"
 
-    with open("sources_list.pickle", "rb") as sl:
+    with open(f"{args.sl}.pkl", "rb") as sl:
         sources = load(sl)
-    extract_all_sentences(og_file, input_file, sources)
-    create_excel(input_file, output_file, target_file)
+    extract_all_sentences(args.inpt, aux_file, sources)
+    create_excel(args.inpt, args.otpt, args.ta)
 
 if __name__ == "__main__":
     main()
