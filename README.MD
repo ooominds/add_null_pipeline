@@ -15,10 +15,14 @@ An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, 
 Create a file ("_test_null.txt_") that has **500 sentences sampled** from "_wst_c5.txt_" but with null-article tags added.
 An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, this has the word/token tag pairs that make up the columns of "_wst_c5.txt_" as sentences that each occupy a line each.
 
-`>python3 add_null.py BNC_XML_2007/wst_c5 BNC_XML_2007/sen_wst_c5 test_null -sr -n 200 -b 4 -a 5`
+`>python3 add_null.py BNC_XML_2007/wst_c5 BNC_XML_2007/sen_wst_c5 test_null -sa -n 200 -b 4 -a 5`
 
 Create a file ("_test_null.txt_") that has **200 sentences each with the previous 4 sentences and following 5 sentences sampled** from "_wst_c5.txt_" but with null-article tags added. An intemermediate file "BNC_XML_2007/sen_wst_c5 test_null.txt" is also created, this has the word/token tag pairs that make up the columns of "_wst_c5.txt_" as sentences that each occupy a line each.
 
+For create_excel:
+`>python3 create_excel.py -inpt may_16_test_null -otpt new_output_file -ta source_sen -sl sources_list`
+
+Note that an auxiliary file "temp_sens.txt" is created.
 
 ## Parameters
 
@@ -47,7 +51,7 @@ These are all optional flags that manage the sampling process.
 -sa
 :   Sample random individual sentences from the in_file, this is a flag and does not take any values, by default this is False
 
--sr
+-sa
 :   Sample random sequences of sentences from the in_file, this is a flag and does not take any values, by default this is False
 
 -se
@@ -57,10 +61,12 @@ These are all optional flags that manage the sampling process.
 :   The number of individual sentences to sample, by default this is **500**
 
 -c
-:   The number of sentences before and after the sampled sentence to include (this is only necessary to set if the sr flag is also set). By default this is **3** so if it is not set and -sr is True, the three previous and three following sentences of a randomly sampled sentence will be added to the out_file.
+:   The number of sentences before and after the sampled sentence to include (this is only necessary to set if the sr flag is also set). By default this is **3** so if it is not set and -sa is True, the three previous and three following sentences of a randomly sampled sentence will be added to the out_file.
 
 -b
-:   The number of sentences before the sampled sentence to include, this is only necessary to set if the sr flag is also set and is unecessary to set if the -c flag is set. By default this is **3** so if it is not set and -sr is True, the three previous sentences of a randomly sampled sentence will be added to the out_file.
+:   The number of sentences before the sampled sentence to include, this is only necessary to set if the sr flag is also set and is unecessary to set if the -c flag is set. By default this is **3** so if it is not set and -sa is True, the three previous sentences of a randomly sampled sentence will be added to the out_file.
 
 -a
-:   The number of sentences after the sampled sentence to include (this is only necessary to set if the sr flag is also set). By default this is **3** so if it is not set and -sr is True, the three following sentences of a randomly sampled sentence will be added to the out_file.
+:   The number of sentences after the sampled sentence to include (this is only necessary to set if the sr flag is also set). By default this is **3** so if it is not set and -sa is True, the three following sentences of a randomly sampled sentence will be added to the out_file.
+
+

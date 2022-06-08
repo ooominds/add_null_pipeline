@@ -2,6 +2,7 @@ from add_null import extract_all_sentences
 from random import shuffle
 from pickle import load
 from pandas import DataFrame
+import argparse
 
 def add_article_tag(line):
     """
@@ -86,9 +87,17 @@ def create_excel(input_file, output_file, target_file="source_sen", sen_markers 
 
 def main():
     parser = argparse.ArgumentParser()
+
+    # default is output.txt
     parser.add_argument('-inpt', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
+
+    # new_output
     parser.add_argument('-otpt', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
+
+    # source_sen
     parser.add_argument('-ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    
+    # sources_list.pickle
     parser.add_argument('-sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
 
     args = parser.parse_args()
@@ -96,10 +105,10 @@ def main():
     aux_file = "temp_sens"
     target_file = "source_sen"
 
-    with open(f"{args.sl}.pkl", "rb") as sl:
+    with open(f"{args.sl}.pickle", "rb") as sl:
         sources = load(sl)
     extract_all_sentences(args.inpt, aux_file, sources)
-    create_excel(args.inpt, args.otpt, args.ta)
+    create_excel(aux_file, args.otpt, args.ta)
 
 if __name__ == "__main__":
     main()
