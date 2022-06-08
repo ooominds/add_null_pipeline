@@ -117,7 +117,10 @@ def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_
 
     data_gen = (line for line in open(f"{quote(cur_file)}.txt", 'r', encoding="utf-8"))
     sen_complete, sentence = False, ""
+    print("KEEP SOURCE: ", keep_source)
     sen_list = []
+    sources = []
+    
     for line in data_gen:
         #split the line into tags and tokens
         #marks a complete sentence
