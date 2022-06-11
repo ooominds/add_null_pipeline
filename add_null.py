@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 from nltk import RegexpParser, tree
 from os import mkdir
 from os.path import exists, join
@@ -290,14 +293,27 @@ def main():
     parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
     
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
-    parser.add_argument('-con', action='store_false', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
-    parser.add_argument('-so', action='store_falsehj', help='Give the source ID of this sentence')
+    parser.add_argument('-con', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
+    parser.add_argument('-so', action='store_true', help='Give the source ID of this sentence')
 
     parser.add_argument('-se', type=int, default=500, help='a random seed')
     parser.add_argument('-n', type=int, default=500, help='number of sentences to sample (requires sample flag to be set)')
     parser.add_argument('-c', type=int, default=-1, help='number of sentences before and after the sampled sentence to include')
     parser.add_argument('-b', type=int, default=3, help='number of sentences before a sampled sentence to include')
     parser.add_argument('-a', type=int, default=3, help='number of sentences after a sampled sentence to include')
+
+    # default is output.txt
+    parser.add_argument('in_file', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
+
+    # new_output
+    parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
+
+    # source_sen
+    parser.add_argument('ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    
+    # sources_list.pickle
+    parser.add_argument('sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
+
 
     args = parser.parse_args()
 

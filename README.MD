@@ -54,11 +54,11 @@ These are all optional flags that manage the sampling process.
 :   Sample random sequences of sentences from the in_file, this is a flag and does not take any values, by default this is False
 
 -so
-:   Keep the source file of the sentences (sampled) from the in_file. This is a flag and does not take any values. **This is now on by default**
+:   Keep the source file of the sentences (sampled) from the in_file. This is a flag and does not take any values.
 
 
 -con
-:   Sample random sentences from the in_file and keep the context (the previous _b_ sentences and subsequent _a_ sentences from in_file. This is a flag and does not take any values. **This is now on by default**
+:   Sample random sentences from the in_file and keep the context (the previous _b_ sentences and subsequent _a_ sentences from in_file. This is a flag and does not take any values.
 
 -se
 :  **This has not been implemented yet**: this sets the random seed for the sampling.

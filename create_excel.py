@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from add_null import extract_all_sentences
 from random import shuffle
 from pickle import load
@@ -85,7 +87,7 @@ def create_excel(input_file, output_file, target_file="source_sen", sen_markers 
     data_df = DataFrame(data_dic)
     data_df.to_excel(f"{output_file}.xlsx", index=False)
 
-def main():
+def run():
     parser = argparse.ArgumentParser()
 
     # default is output.txt
@@ -111,4 +113,4 @@ def main():
     create_excel(aux_file, args.out_file, args.ta)
 
 if __name__ == "__main__":
-    main()
+    run()
