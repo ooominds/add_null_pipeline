@@ -89,26 +89,26 @@ def main():
     parser = argparse.ArgumentParser()
 
     # default is output.txt
-    parser.add_argument('-inpt', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
+    parser.add_argument('in_file', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
 
     # new_output
-    parser.add_argument('-otpt', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
+    parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
 
     # source_sen
-    parser.add_argument('-ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    parser.add_argument('ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
     
     # sources_list.pickle
-    parser.add_argument('-sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
+    parser.add_argument('sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
 
     args = parser.parse_args()
     output_file = "output"
     aux_file = "temp_sens"
     target_file = "source_sen"
 
-    with open(f"{args.sl}.pickle", "rb") as sl:
+    with open(f"{args.sl}.pkl", "rb") as sl:
         sources = load(sl)
-    extract_all_sentences(args.inpt, aux_file, sources)
-    create_excel(aux_file, args.otpt, args.ta)
+    extract_all_sentences(args.in_file, aux_file, sources)
+    create_excel(aux_file, args.out_file, args.ta)
 
 if __name__ == "__main__":
     main()

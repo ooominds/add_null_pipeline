@@ -117,7 +117,6 @@ def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_
 
     data_gen = (line for line in open(f"{quote(cur_file)}.txt", 'r', encoding="utf-8"))
     sen_complete, sentence = False, ""
-    print("KEEP SOURCE: ", keep_source)
     sen_list = []
     sources = []
     
@@ -161,7 +160,7 @@ def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_
         for sentence in sen_list:
             nf.write(f"{sentence}")
     if keep_source:
-        with open("sources_list.pickle", "wb") as sl:
+        with open("sources_list.pkl", "wb") as sl:
             dump(sources, sl)
 
 def run_bash_comms(n, in_file, new_f, args):
@@ -291,8 +290,8 @@ def main():
     parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
     
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
-    parser.add_argument('-con', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
-    parser.add_argument('-so', action='store_true', help='Give the source ID of this sentence')
+    parser.add_argument('-con', action='store_false', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
+    parser.add_argument('-so', action='store_falsehj', help='Give the source ID of this sentence')
 
     parser.add_argument('-se', type=int, default=500, help='a random seed')
     parser.add_argument('-n', type=int, default=500, help='number of sentences to sample (requires sample flag to be set)')
