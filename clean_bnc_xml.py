@@ -19,8 +19,9 @@ import argparse
 from nltk.corpus.reader.bnc import BNCCorpusReader
 
 # Instantiate the reader like this
-def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_punctuations.txt", outfno_path = "../processed_data/written_sentence_per_line_without_punctuations.txt", outf_path="../processed_data/written_sentence_tagged.txt"):
-    bnc = BNCCorpusReader(root='../BNC_XML_2007/download/Texts', fileids=r'[A-K]/\w*/\w*\.xml')
+def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_punctuations.txt", outfno_path = "../processed_data/written_sentence_per_line_without_punctuations.txt", outf_path="../processed_data/written_sentence_tagged.txt",
+              bnc_root = "../BNC_XML_2007/download/Texts"):
+    bnc = BNCCorpusReader(root=bnc_root, fileids=r'[A-K]/\w*/\w*\.xml')
 
     spoken = []
     written = []
@@ -57,9 +58,10 @@ def run():
     parser.add_argument("outfyes", type=str, help="INPUT: path for creating written sentences per line file from BNC with punctuation")
     parser.add_argument("outfno", type=str, help="INPUT: path for creating written sentences per line file from BNC without punctuation")
     parser.add_argument("outf", type=str,help="INPUT: path for creating tagged written sentences")
+    parser.add_argument("bnc_root", type=str, help="INPUT: path to the directory with the BNC text files")
     
     args = parser.parse_args()
-    clean_bnc(args.outfyes, args.outfno, args.outf)
+    clean_bnc(args.outfyes, args.outfno, args.outf, args.bnc_root)
 
 
 if __name__ == "__main__":
