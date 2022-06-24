@@ -98,5 +98,26 @@ ta
 sl
 :   **INPUT** location of the .pkl file that stores the list of source IDs (created by the add_null process if -so flag set).
 
+
+
+# pipeline.py
+
+Run multiple pythons scripts using **parameter_file.py**, an example of the input that goes into this parameter file can be found at **examples/example_file.py**
+
+### Example commands for create_excel:
+
+`python3 pipeline.py -cbx -an -ce`
+`python3 pipeline.py -cbx`
+
 ## Flags
+
+
+cbx
+:   run **step 1** - clean_bnc_xml.py
+
+an
+:   run **step 2** - add_null.py (clean_bnc_xml.py must have been run previously)
+
+ce
+:   run **step 3** - create_excel.py (add_null.py must have been run previously)
 
