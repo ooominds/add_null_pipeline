@@ -91,16 +91,16 @@ def run():
     parser = argparse.ArgumentParser()
 
     # default is output.txt
-    parser.add_argument('in_file', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
+    parser.add_argument('in_file', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for the tag and the other for the token')
 
     # new_output
     parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
 
     # source_sen
-    parser.add_argument('ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
+    parser.add_argument('ta', type=str, default="source_sen", help='INPUT: location of a file that includes all the sampled sentences, one per line.')
     
     # sources_list.pickle
-    parser.add_argument('sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
+    parser.add_argument('sl', type=str, default="sources_list", help='INPUT: location of the .pkl that stores the list of source IDs')
 
     args = parser.parse_args()
     output_file = "output"

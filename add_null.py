@@ -8,6 +8,7 @@ from subprocess import run, check_output
 from pickle import dump, load
 from random import sample
 from shlex import quote
+from shutil import rmtree
 
 import argparse
 import logging
@@ -85,7 +86,7 @@ def add_null(in_file="200_extra_sentences.txt", out_file="nulled_sentences"):
                 f.write("{}\t{}\n".format(pair[0], pair[1]))
 
 
-def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_source=False):
+def extract_all_sentences(cur_file, new_file, sources_list = "sources_list", sen_markers = ['.','?','!'], keep_source=False):
     """
         FUNCTION:
         ---------------
@@ -163,7 +164,7 @@ def extract_all_sentences(cur_file, new_file, sen_markers = ['.','?','!'], keep_
         for sentence in sen_list:
             nf.write(f"{sentence}")
     if keep_source:
-        with open("sources_list.pkl", "wb") as sl:
+        with open(f"{quote(sources_list)}.pkl", "wb") as sl:
             dump(sources, sl)
 
 def run_bash_comms(n, in_file, new_f, args):
@@ -199,14 +200,14 @@ def run_bash_comms(n, in_file, new_f, args):
         check_output(f"shuf -n {n} {quote(in_file)}.txt >> {quote(new_f)}.txt", shell=True)
     elif args.con:
         delim = "$\n"
-        print(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt")
-        check_output(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> source_sen.txt", shell=True)
+        print(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> {quote(args.ta)}.txt")
+        check_output(f"grep AT0 {quote(in_file)}.txt | shuf -n {n} >> {quote(args.ta)}.txt", shell=True)
         if args.c == -1:
             b, a= args.b, args.a
         else:
             b, a = args.c, args.c
         
-        sample_sentences = (line for line in open("source_sen.txt", 'r', encoding="utf-8"))
+        sample_sentences = (line for line in open(f"{quote(args.ta)}.txt", 'r', encoding="utf-8"))
         for line in sample_sentences:
             bash_args = f"{line[:-1]}"
             source_file =f"temp_SOURCE_ID/{line[-17:-14]}.txt"
@@ -262,7 +263,7 @@ def random_sample_range(args):
         f.close()
 
         # Remove the file that stores the sampled sentences each run
-        check_output("truncate -s 0 source_sen.txt", shell=True)
+        check_output(f"truncate -s 0 {quote(args.ta)}.txt", shell=True)
         # Remove the file that stores the sampled sentences and their context each run
         check_output(f"truncate -s 0 {quote(new_f)}.txt", shell=True)
 
@@ -291,7 +292,12 @@ def main():
     parser.add_argument('og_file', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
     parser.add_argument('in_file', type=str, help='CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag')
     parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)')
-    
+    # source_sen
+    parser.add_argument('ta', type=str, default="source_sen", help='CREATED: location of a file that includes all the sampled sentences, one per line.')    
+    # sources_list.pickle
+    parser.add_argument('sl', type=str, default ="sources_list", help='CREATED: location of the .pkl that stores the list of sources')
+
+
     parser.add_argument('-sa', action='store_true', help='Sample random sentences from the in_file')
     parser.add_argument('-con', action='store_true', help='Sample random sentences from the in_file as well as r sentence before and l sentences after')
     parser.add_argument('-so', action='store_true', help='Give the source ID of this sentence')
@@ -301,19 +307,6 @@ def main():
     parser.add_argument('-c', type=int, default=-1, help='number of sentences before and after the sampled sentence to include')
     parser.add_argument('-b', type=int, default=3, help='number of sentences before a sampled sentence to include')
     parser.add_argument('-a', type=int, default=3, help='number of sentences after a sampled sentence to include')
-
-    # default is output.txt
-    parser.add_argument('in_file', type=str, help='INPUT: location of the POS-tagged .txt file with null tags added - stored as two coumns, one for teh tag and the other for the token')
-
-    # new_output
-    parser.add_argument('out_file', type=str, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column')
-
-    # source_sen
-    parser.add_argument('ta', type=str, help='INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag')
-    
-    # sources_list.pickle
-    parser.add_argument('sl', type=str, help='INPUT: location of the .pkl that stores the list of sources')
-
 
     args = parser.parse_args()
 
@@ -325,10 +318,12 @@ def main():
     else:
         if args.so:
             if not exists("temp_SOURCE_ID"):
-                mkdir("temp_SOURCE_ID")            
-            extract_all_sentences(args.og_file, args.in_file, keep_source=True)
+                mkdir("temp_SOURCE_ID")
+            else:
+                rmtree("temp_SOURCE_ID")
+            extract_all_sentences(args.og_file, args.in_file, args.sl, keep_source=True)
         else:
-            extract_all_sentences(args.og_file, args.in_file)
+            extract_all_sentences(args.og_file, args.in_file, args.sl)
 
     if args.sa or args.con:
         random_sample_range(args)

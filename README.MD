@@ -29,7 +29,8 @@ Note that an auxiliary file "temp_sens.txt" is created.
 ## Parameters
 
 og_file
-: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag
+: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag. This file can alternatively have 3 columns,
+The first being the source ID of the tag/token pair.
 This is the first argument, since it is a positional parameter you do not need to name the parameter. **do not** include the file extension (this should be ".txt") when filling out this parameter.
 This file should be formatted in two columns, the left column should be words while the right-column should be part of speech tags.
 Separate these two columns with a tab ("\t") character.
@@ -54,7 +55,7 @@ These are all optional flags that manage the sampling process.
 :   Sample random sequences of sentences from the in_file, this is a flag and does not take any values, by default this is False
 
 -so
-:   Keep the source file of the sentences (sampled) from the in_file. This is a flag and does not take any values.
+:   Keep the source file of the sentences (sampled) from the in_file. Note that this means that the og_file must have 3 columns instead of 2, the first column being for the source ID. This is a flag and does not take any values.
 
 
 -con

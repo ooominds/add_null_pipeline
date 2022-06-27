@@ -19,7 +19,7 @@ import argparse
 from nltk.corpus.reader.bnc import BNCCorpusReader
 
 # Instantiate the reader like this
-def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_punctuations.txt", outfno_path = "../processed_data/written_sentence_per_line_without_punctuations.txt", outf_path="../processed_data/written_sentence_tagged.txt",
+def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_punctuationst", outfno_path = "../processed_data/written_sentence_per_line_without_punctuations", outf_path="../processed_data/written_sentence_tagged",
               bnc_root = "../BNC_XML_2007/download/Texts"):
     bnc = BNCCorpusReader(root=bnc_root, fileids=r'[A-K]/\w*/\w*\.xml')
 
@@ -31,8 +31,8 @@ def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_p
         else:
             written.append(fileid)
 
-    outfyes = open(quote(outfyes_path), 'w')
-    outfno = open(quote(outfno_path), 'w')
+    outfyes = open(quote(f"{outfyes_path}.txt"), 'w')
+    outfno = open(quote(f"{outfno_path}.txt"), 'w')
     for fileid in written:
         item_id = fileid.split('.')[0].split('/')[2]
         for sentence in bnc.sents(fileid):
@@ -44,7 +44,7 @@ def clean_bnc(outfyes_path = "../processed_data/written_sentence_per_line_with_p
     outfyes.close()
     outfno.close()
 
-    outf = open(quote(outf_path), 'w')
+    outf = open(quote(f"{outf_path}.txt"), 'w')
     outf.write('SOURCE_ID\tWORD\tTAG\n')
     for fileid in written:
         item_id = fileid.split('.')[0].split('/')[2]
