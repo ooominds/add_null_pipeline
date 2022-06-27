@@ -40,7 +40,7 @@ a= 3    #type=int, default=3, help=number of sentences after a sampled sentence 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-ce_in_file = an_in_file #type=str, help = CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
+ce_in_file = an_out_file #type=str, help = CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
 ce_out_file = f"output_excel" #type =sen, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column'
 ta = ta #type=str, help= INPUT: location of a file that includes all the sampled sentences, one per line.
 sl = sl #type =str, help=INPUT: location of the .pkl that stores the list of source IDs

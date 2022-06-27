@@ -4,6 +4,7 @@ from add_null import extract_all_sentences
 from random import shuffle
 from pickle import load
 from pandas import DataFrame
+from os import remove
 import argparse
 
 def add_article_tag(line):
@@ -52,8 +53,10 @@ def create_excel(input_file, output_file, target_file="source_sen", sen_markers 
     sen = ""
     cur_code = 2
     for line in data_read:
+        print(line)
         line = f"[{line}]"
         eval_line = eval(line)
+        print(eval_line)
         if eval_line[0][0] == "CONTEXTA":
             target_code = 1
         elif eval_line[0][0] == "CONTEXTB":
@@ -103,14 +106,14 @@ def run():
     parser.add_argument('sl', type=str, default="sources_list", help='INPUT: location of the .pkl that stores the list of source IDs')
 
     args = parser.parse_args()
-    output_file = "output"
     aux_file = "temp_sens"
     target_file = "source_sen"
 
     with open(f"{args.sl}.pkl", "rb") as sl:
         sources = load(sl)
-    extract_all_sentences(args.in_file, aux_file, sources)
+    extract_all_sentences(args.in_file, aux_file, sen_markers = ['.','?','!'])
     create_excel(aux_file, args.out_file, args.ta)
+    os.remove(aux_file)
 
 if __name__ == "__main__":
     run()
