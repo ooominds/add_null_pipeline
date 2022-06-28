@@ -10,14 +10,13 @@ PY_VERSION =  "3" # python version being used
 outfyes= f"BNC_XML_2007{sep}june_25{sep}written_sentence_per_line_with_punctuations" # .txt #type=str, help=CREATED: path for creating written sentences per line file from BNC with punctuation # example: "../processed_data/written_sentence_per_line_with_punctuations.txt
 outfno= f"BNC_XML_2007{sep}june_25{sep}written_sentence_per_line_without_punctuations" # .txt #type=str, help=CREATED: path for creating written sentences per line file from BNC without punctuation
 outf= f"BNC_XML_2007{sep}june_25{sep}written_sentence_tagged" # .txt #type=str,help=CREATED: path for creating tagged written sentences
-bnc_root= f"" #type=str, help=INPUT: path to the directory with the BNC text files
+bnc_root= f"BNC_XML_2007{sep}Texts" #type=str, help=INPUT: path to the directory with the BNC text files
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     PARAMETERS FOR add_null.py
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#og_file =  outfyes #type=str, help=INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag
-og_file =  f"BNC_XML_2007{sep}sst_c5" #type=str, help=INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag
+og_file =  outf #f"BNC_XML_2007{sep}sst_c5" #type=str, help=INPUT: location of the POS-tagged corpus file, A .txt file with two columns, one for a word and the other for the POS-tag
 an_in_file=   f"BNC_XML_2007{sep}june_25{sep}pipeline_in_file" #type=str, help =CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
 an_out_file=  f"pipeline_test" #type=str, help=CREATED: location of the output file. A .txt file with two columns, one for a word and the other for the POS-tag (with null article tags)
 ta = f"source_sen" # type=str, help=CREATED: location of a file that includes all the sampled sentences, one per line.
@@ -38,7 +37,6 @@ a= 3    #type=int, default=3, help=number of sentences after a sampled sentence 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     PARAMETERS FOR create_excel.py
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 ce_in_file = an_out_file #type=str, help = CREATED: location of the POS-tagged corpus .txt file stored as sentence per line, each line contains sequences of tuples that form a sentence, the tuples contain a word and POS-tag
 ce_out_file = f"output_excel" #type =sen, help='CREATED: location of the output file. A .xlsx file with rows for each sentence, rows where the sentence is a context sentence will have multiple sentences in the "sentence" column'
