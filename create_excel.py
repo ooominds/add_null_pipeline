@@ -53,10 +53,8 @@ def create_excel(input_file, output_file, target_file="source_sen", sen_markers 
     sen = ""
     cur_code = 2
     for line in data_read:
-        print(line)
         line = f"[{line}]"
         eval_line = eval(line)
-        print(eval_line)
         if eval_line[0][0] == "CONTEXTA":
             target_code = 1
         elif eval_line[0][0] == "CONTEXTB":
@@ -111,9 +109,9 @@ def run():
 
     with open(f"{args.sl}.pkl", "rb") as sl:
         sources = load(sl)
-    extract_all_sentences(args.in_file, aux_file, sen_markers = ['.','?','!'])
+    extract_all_sentences(args.in_file, aux_file, sen_markers = sources)
     create_excel(aux_file, args.out_file, args.ta)
-    os.remove(aux_file)
+    remove(f"{aux_file}.txt")
 
 if __name__ == "__main__":
     run()
