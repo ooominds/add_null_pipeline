@@ -28,9 +28,9 @@ def main():
     if args.cbx:
         check_output(f"python{PY_VERSION} clean_bnc_xml.py {outfyes} {outfno} {outf} {bnc_root}", shell=True)
     if args.an:
-        check_output(f"python{PY_VERSION} add_null.py {og_file} {an_in_file} {an_out_file} {ta} {sl} -n {n} {an_flag_args()}", shell=True)
+        check_output(f"python{PY_VERSION} add_null.py {og_file} {an_in_file} {an_out_file} {an_ta} {an_sl} -n {n} {an_flag_args()}", shell=True)
     if args.ce:
-        check_output(f"python{PY_VERSION} create_excel.py {ce_in_file} {ce_out_file} {ta} {sl}", shell=True)
+        check_output(f"python{PY_VERSION} create_excel.py {ce_in_file} {ce_out_file} {ce_ta} {ce_sl}", shell=True)
     
 if __name__ == "__main__":
     main()

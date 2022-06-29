@@ -103,7 +103,7 @@ sl
 
 # pipeline.py
 
-Run multiple pythons scripts using **parameter_file.py**, an example of the input that goes into this parameter file can be found at **examples/example_file.py**
+Run multiple pythons scripts using **parameter_file.py**, an example of the input that goes into this parameter file can be found at **examples/example_parameter_file.py**
 
 ### Example commands for create_excel:
 
